@@ -6,23 +6,26 @@ var User =  require('../models/User');
 /* GET users listing. */
 router.get('/', function(req, res, next) {
 
-  new User().where(function(query) {
-    query.where('id > 1').orWhere('id = 1')
-  }).where('name = "omer"').all(req, function(err, rows) {
-    if (err) throw err;
-    
-    res.json(rows)
-  })
+  new User().with(['roles']).get().then((users) => {
+
+    res.json(users)
+
+  }).catch((err) => {
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
+
+    res.status(400)
+    res.render('error', err)
+  });
 
 });
 
 router.get('/:id', function(req, res, next) {
-  new User().find(req.params.id, function(err, rows) {
-    if (err) throw err;
-    
-    res.json(rows)
-  })
+  new User({}, req, res).find(req.params.id).then((user) => {
 
+     res.json(user)
+
+  })
 });
 
 module.exports = router;

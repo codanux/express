@@ -1,13 +1,11 @@
-const con = require("../config/db.js");
 let Model = require('./Model')
+let Role = require('./Role')
 
 class User extends Model {
-    constructor() {
-        super()
-        this.table = 'users'
 
+    roles() {
+        return this.hasMany(Role, 'user_id', 'id');
     }
-
 }
 
 
