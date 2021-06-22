@@ -6,7 +6,8 @@ var User =  require('../models/User');
 /* GET users listing. */
 router.get('/', function(req, res, next) {
 
-  new User().with(['roles']).get().then((users) => {
+
+  new User().with(['roles', 'role']).get().then((users) => {
 
     res.json(users)
 
@@ -21,10 +22,8 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/:id', function(req, res, next) {
-  new User({}, req, res).find(req.params.id).then((user) => {
-
-     res.json(user)
-
+  new User({}, req, res).with(['role']).find(req.params.id).then((user) => {
+    res.json(user);
   })
 });
 

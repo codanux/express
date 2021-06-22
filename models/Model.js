@@ -1,18 +1,19 @@
 const con = require("../config/db.js");
 const pluralize = require('pluralize')
+const HasMany = require('../relations/HasMany')
+const BelongsTo = require('../relations/BelongsTo')
+
 
 class Model {
   primaryKey = 'id';
   table = null;
   attributes = {}
-
   select = []
-
   query = {
     where: [],
   }
-
   eagerLoad = []
+  relations = {}
 
   constructor(attributes = {}) {
     this.attributes = attributes;
@@ -34,20 +35,17 @@ class Model {
   }
 
   hasMany = function (related, foreignKey , localeKey) {
-
-    let query = new related();
-
     foreignKey = foreignKey ?? this.getForeignKey();
     localeKey = localeKey ?? this.getKeyName();
-
-    query.getForeignKey = () => foreignKey;
-    query.localeKey = () => localeKey;
-
-    query.where(`${foreignKey} = ${this.getKey(localeKey)}`)
-
-    console.log(query)
-    return query;
+    return new HasMany(related, this, foreignKey, localeKey);
   }
+
+  belongsTo = function (related, foreignKey = null, ownerKey = null, relation = null) {
+    foreignKey = foreignKey ?? this.getForeignKey();
+    ownerKey = ownerKey ?? this.getKeyName();
+    return new BelongsTo(related, this, foreignKey, ownerKey);
+  }
+
 
   eagerLoadRelations = async function(rows) {
     let _vm = this;
@@ -59,21 +57,8 @@ class Model {
   }
 
   eagerLoadRelation = async function(models, related) {
-
-    let keys = models.map((model) => model.getKey())
-
-    let query = this[related]();
-
-    let rows = await query.newQuery().whereIn(query.getLocaleKey(), keys).get()
-
-    models.forEach(model => {
-      model.attributes[related] = rows.filter((row) => row.getAttribute(query.getForeignKey()) === model.getAttribute(query.getLocaleKey()));
-
-    });
-
-    return models;
+    return await this[related]().eagerLoad(models, related);
   }
-
 
 
   // Query
@@ -81,10 +66,16 @@ class Model {
   find = function (id) {
     return new Promise((resolve, reject) => {
       let _vm = this
-      con.query(`SELECT ${this.select.join(',')} FROM ${this.table} WHERE id = ${id} limit 1`, function(err, data) {
+      con.query(`SELECT ${this.select.join(',')} FROM ${this.table} WHERE id = ${id} limit 1`, async function(err, rows) {
         if (err) throw err;
-        if (data) {
-          resolve(_vm.newQuery(data[0]));
+        if (rows) {
+          // instance create
+          rows = rows.map((row) => _vm.clone(row));
+
+          // eager load
+          await _vm.eagerLoadRelations(rows);
+
+          resolve(rows[0]);
         }
         reject('empty data');
       })
@@ -96,22 +87,19 @@ class Model {
   get = function () {
     return new Promise((resolve, reject) => {
       let _vm = this;
-
-      let query = `SELECT ${this.select.join(',')} FROM ${this.table}`;
-      query = query + this.generate();
+      let query = `SELECT ${this.select.join(',')} FROM ${this.table} ${this.generate()}`;
 
       con.query(query, async function (err, rows) {
         if (err) return reject(err);
 
         // instance create
-        rows = rows.map((row) => _vm.newQuery(row));
+        rows = rows.map((row) => _vm.clone(row));
 
         // eager load
         await _vm.eagerLoadRelations(rows);
 
         resolve(rows)
       });
-
     }).catch((err) => {
       console.error(err);
     });
@@ -206,7 +194,6 @@ class Model {
   clone(attributes) {
     let clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this)
     clone.attributes = attributes;
-    console.log(clone)
     return clone;
   }
 

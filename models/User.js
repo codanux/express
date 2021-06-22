@@ -6,6 +6,10 @@ class User extends Model {
     roles() {
         return this.hasMany(Role, 'user_id', 'id');
     }
+
+    role() {
+        return this.belongsTo(Role, 'user_id', 'id');
+    }
 }
 
 
