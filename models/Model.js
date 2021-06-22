@@ -41,7 +41,8 @@ class Model {
   }
 
   belongsTo = function (related, foreignKey = null, ownerKey = null, relation = null) {
-    foreignKey = foreignKey ?? this.getForeignKey();
+    relation = relation ?? new related().constructor.name
+    foreignKey = foreignKey ?? this.getForeignKey(relation);
     ownerKey = ownerKey ?? this.getKeyName();
     return new BelongsTo(related, this, foreignKey, ownerKey);
   }

@@ -1,9 +1,6 @@
 const Relation = require('./Relation')
 
 class BelongsTo extends Relation {
-    get foreignKey() {
-        return this._foreignKey;
-    }
 
     constructor(query, parent, foreignKey, ownerKey)
     {
@@ -28,12 +25,12 @@ class BelongsTo extends Relation {
         return models;
     }
 
-    get ownerKey() {
-        return this._ownerKey;
+    get foreignKey() {
+        return this._foreignKey;
     }
 
-    get localKey() {
-        return this._localKey;
+    get ownerKey() {
+        return this._ownerKey;
     }
 }
 
