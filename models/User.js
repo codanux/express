@@ -8,7 +8,7 @@ class User extends Model {
     }
 
     role() {
-        return this.belongsTo(Role, 'user_id', 'id');
+        return this.belongsTo(Role, 'role_id', 'id');
     }
 }
 

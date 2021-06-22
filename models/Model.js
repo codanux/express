@@ -67,11 +67,10 @@ class Model {
     return new Promise((resolve, reject) => {
       let _vm = this
       con.query(`SELECT ${this.select.join(',')} FROM ${this.table} WHERE id = ${id} limit 1`, async function(err, rows) {
-        if (err) throw err;
+        if (err) return reject(err);
         if (rows) {
           // instance create
           rows = rows.map((row) => _vm.clone(row));
-
           // eager load
           await _vm.eagerLoadRelations(rows);
 
@@ -79,9 +78,7 @@ class Model {
         }
         reject('empty data');
       })
-    }).catch((err) => {
-      console.error(err)
-    });
+    })
   }
 
   get = function () {
@@ -100,9 +97,7 @@ class Model {
 
         resolve(rows)
       });
-    }).catch((err) => {
-      console.error(err);
-    });
+    })
   }
 
   newQuery = function (attributes = {}) {
@@ -183,8 +178,9 @@ class Model {
     return this.primaryKey;
   }
 
-  getForeignKey() {
-    return (this.constructor.name+'_'+this.getKeyName()).toLowerCase();
+  getForeignKey(name = null) {
+    name = name ?? this.constructor.name;
+    return (name+'_'+this.getKeyName()).toLowerCase();
   }
 
   getLocaleKey() {

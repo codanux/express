@@ -10,7 +10,7 @@ class HasMany extends Relation {
     }
 
     eagerLoad = async function (models, related) {
-        let keys = models.map((model) => model.getKey())
+        let keys = models.map((model) => model.getAttribute(this.localKey))
 
         let query = new this.query();
 
